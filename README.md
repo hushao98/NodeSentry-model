@@ -9,14 +9,14 @@ The framework encompasses two principal phases: the offline model training phase
 
 ```
 NodeSentry-model 
-├── node_data                    # Directory for storing time series data
-├── clustering         # Directory for coarse-grained clustering methods and results
+├── data                           # Directory for storing time series data
+├── clustering                     # Directory for coarse-grained clustering methods and results
 │   ├── classify_result            # Directory for storing clustering results
 │   ├── feature_center             # Directory for storing cluster centers and feature weights
 │   ├── normalized_result          # Directory for storing standardized feature indices 
 │   ├── clustering.py              # Coarse-grained clustering code
 │   └── utils.py                   # Utility functions for clustering
-├── model_sharing      # Directory for fine-grained model sharing methods and results
+├── model_sharing                  # Directory for fine-grained model sharing methods and results
 │   ├── model                      # Directory for storing trained models
 │   ├── result                     # Directory for storing anomaly detection results
 │   ├── detection.py               # Anomaly detection code
@@ -32,23 +32,27 @@ NodeSentry-model
 
 ## Data Description
 
-### 1. Job scheduling list
+### Dataset Overview
+This open-source dataset is designed for research on anomaly detection. It contains information related to 7 nodes and 17 jobs. The data is divided into training and testing sets, and can be used for developing and validating anomaly detection algorithms.
 
-A job scheduling list is required during anomaly detection to obtain the job status of a specific node. The format of the job list is as follows:
+### Data File Description
+The main information in the dataset is stored in a file named `Job`, formatted as follows:
+
+| Field Name | Description |
+|------------|-------------|
+| JobID      | Unique identifier for each job |
+| NodeList   | List of nodes the job ran on |
+| Start      | Job start time |
+| End        | Job end time |
+| Tag        | Indicates whether the job belongs to the training or testing set |
+
+### Sample Data
+Below is a snippet from the `Job` file:
 
 ```
-NodeList|Start|End|State
-node1|2024-01-01T00:00:00|2024-01-02T00:00:00|CANCELLED+
-node2, node3|2024-01-02T00:00:00|2024-01-03T00:00:00|COMPLETED
-```
-### 2. Data Format
-
-The data in the `node_data` folder is used in this project for coarse-grained clustering, fine-grained model sharing training, and anomaly detection. This data is stored as a T-row M+1 column CSV matrix, where T is the time length and M represents the number of metrics. There is an additional column for the timestamp, as shown below:
-
-```
-timestamp, feature1, feature2, feature3
-2024-01-01 00:00:00, 0.5, 0.7, 0.2
-2024-01-01 00:01:00, 0.6, 0.8, 0.3
+JobID|NodeList|Start|End|Tag
+1|Node-1,Node-3,Node-2,Node-4|2024-07-09T23:13:30|2024-07-10T04:43:49|train
+2|Node-1,Node-3,Node-2,Node-4|2024-07-09T00:00:00|2024-07-09T13:40:26|train
 ...
 ```
 
@@ -67,7 +71,7 @@ Note: Python version is 3.8.10
 
 - **config.yml**: Configuration file containing parameters and paths for data processing and model training.
 - **metric.json**: Metrics file containing the metrics involved in training.
-- **node_data**: Data folder storing MTS segments for coarse-grained clustering, fine-grained model sharing training, and anomaly detection.
+- **data**: Data folder storing MTS segments for coarse-grained clustering, fine-grained model sharing training, and anomaly detection.
 - **jobinfo**: Job scheduling list, including job state information.
 
 ## How to Use
@@ -75,17 +79,18 @@ Note: Python version is 3.8.10
 1. **Data Preparation:** Prepare MTS and configuration files. The data folder should be structured as follows:
 
 ```
-node_data                   # Directory for storing MTS
-├── offline                 # Training set 
-│   ├── job                  # job execution
-│   │   └── node1            
-│   │   │   └── metric_job1.csv 
-│   └── nojob                # idle waiting
-│   │   └── node1.csv 
-└── online                  # Test set     
-	└── node1                # Node 1 test data     
-	└── metric.csv
-```  
+/data/
+├── Job              # File containing all job information
+├── Train/           # Training data
+│   └── Node-1
+│       └── Node-1_Job-1.csv
+│       └── Node-1_Job-2.csv
+│   └── Node-2
+│       ...
+└── Test/            # Testing data
+    └── Node-1_Job-13.csv
+    ...
+```
 
 2. **Coarse-grained Clustering:** For example, execute `python clustering.py --job_num 20 --nojob_num 10 --node_num 10` to perform coarse-grained clustering. This will output the clustering results, cluster centers and feature indices for each cluster, feature weights, etc. We have encapsulated this command into the `cluster.sh` and can directly execute `sh cluster.sh`.
 3. **Fine-grained Model Sharing Training:** Execute `python training.py --max_epochs 30 --batch_size 50 --window_size 20 --nhead 3 --num_layers 3 --num_experts 3 --k 1` to perform fine-grained model sharing training and save the trained model. We have encapsulated this command into the `train.sh` and can directly execute `sh train.sh`.
